@@ -1,23 +1,27 @@
-# models/database.py
+# database/database.py
 
 import sqlite3
 import os
 
 def connect_db(db_path="data/database.db"):
-    # Create the directory if it doesn't exist
+    """
+    Établit la connexion à la base SQLite, crée le dossier data/ si besoin.
+    """
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     try:
         db = sqlite3.connect(db_path)
-        db.execute("PRAGMA foreign_keys = ON;")  # Enable foreign key support
+        db.execute("PRAGMA foreign_keys = ON;")
         return db
     except sqlite3.Error as e:
         print(f"Database connection error: {e}")
         return None
 
 def create_tables(db):
+    """
+    Crée (si elles n'existent pas) les tables tasks et subtasks.
+    """
     try:
         cursor = db.cursor()
-        # Create tasks table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tasks (
                 key INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,7 +33,6 @@ def create_tables(db):
                 duration INTEGER
             )
         ''')
-        # Create subtasks table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS subtasks (
                 key INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,20 +48,16 @@ def create_tables(db):
         print(f"Error creating tables: {e}")
 
 def close_db(db):
-    try:
-        db.close()
-    except sqlite3.Error as e:
-        print(f"Error closing database: {e}")
+    """Ferme la connexion DB."""
+    if db:
+        try:
+            db.close()
+        except sqlite3.Error as e:
+            print(f"Error closing database: {e}")
 
 def init_db():
-    """
-    Initialize the database by connecting and creating tables if they don't exist.
-    """
+    """Initialise la DB en créant les tables au besoin."""
     db = connect_db()
     if db:
         create_tables(db)
         close_db(db)
-        
-if __name__ == "__main__":
-    init_db()
-    print("Database initialized successfully.")

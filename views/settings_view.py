@@ -1,66 +1,82 @@
+# views/settings_view.py
+
 import customtkinter as ctk
 import tkinter.filedialog as filedialog
-import csv, json
-from controllers.task_controller import list_tasks
+import csv
+import json
 import theme
+from controllers.task_controller import TaskController
 
 class SettingsView(ctk.CTkFrame):
-    """View for application settings (theme, export, and font selection)."""
+    """
+    Vue de réglages : changement de thème, export CSV/JSON, choix de police.
+    """
     def __init__(self, master, change_theme_callback, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+        self.controller = TaskController()  # si on veut exporter toutes les tâches
         self.change_theme_callback = change_theme_callback
-        self.create_widgets()
+        self._create_widgets()
 
-    def create_widgets(self):
+    def _create_widgets(self):
         self.title_label = ctk.CTkLabel(self, text="Settings", font=theme.get_font())
         self.title_label.pack(pady=10)
 
-        # Button to change theme
-        self.theme_button = ctk.CTkButton(self, text="Change Theme", command=self.change_theme)
+        self.theme_button = ctk.CTkButton(self, text="Toggle Theme", command=self._on_toggle_theme)
         self.theme_button.pack(pady=10)
 
-        # Font selection
+        # Police
         self.font_label = ctk.CTkLabel(self, text="Select Font", font=theme.get_font())
         self.font_label.pack(pady=(10,0))
+
         self.font_combobox = ctk.CTkComboBox(self, values=theme.AVAILABLE_FONTS)
         self.font_combobox.set(theme.DEFAULT_FONT_FAMILY)
         self.font_combobox.pack(pady=10)
-        self.font_combobox.bind("<<ComboboxSelected>>", self.on_font_change)
+        self.font_combobox.bind("<<ComboboxSelected>>", self._on_font_change)
 
-        # Export options
-        self.export_csv_button = ctk.CTkButton(self, text="Export CSV", command=self.export_csv)
-        self.export_csv_button.pack(pady=10)
-        self.export_json_button = ctk.CTkButton(self, text="Export JSON", command=self.export_json)
-        self.export_json_button.pack(pady=10)
+        # Export CSV / JSON
+        export_csv_btn = ctk.CTkButton(self, text="Export CSV", command=self._export_csv)
+        export_csv_btn.pack(pady=10)
 
-    def on_font_change(self, event):
-        """Update the global font setting and refresh the UI if necessary."""
+        export_json_btn = ctk.CTkButton(self, text="Export JSON", command=self._export_json)
+        export_json_btn.pack(pady=10)
+
+    def _on_toggle_theme(self):
+        self.change_theme_callback()
+
+    def _on_font_change(self, _event):
         selected_font = self.font_combobox.get()
-        theme.DEFAULT_FONT_FAMILY = selected_font  # update the default font in the theme module
-        # Optionally, refresh the entire UI here
+        theme.DEFAULT_FONT_FAMILY = selected_font
         self.change_theme_callback()
 
-    def change_theme(self):
-        self.change_theme_callback()
-
-    def export_csv(self):
-        tasks = list_tasks()
-        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+    def _export_csv(self):
+        tasks = self.controller.list_tasks()
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                                 filetypes=[("CSV files", "*.csv")])
         if file_path:
-            with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
-                import csv
-                writer = csv.writer(csvfile)
-                writer.writerow(["key", "title", "description", "date", "time", "duration", "done"])
-                for task in tasks:
-                    writer.writerow([task.key, task.title, task.description, task.date, task.time, task.duration, task.done])
-            print("CSV export completed.")
+            try:
+                with open(file_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(["key", "title", "description", "date", "time",
+                                     "duration", "done"])
+                    for t in tasks:
+                        writer.writerow([
+                            t.key, t.title, t.description,
+                            t.date, t.time, t.duration, t.done
+                        ])
+                print("CSV export successful.")
+            except Exception as e:
+                print(f"Error exporting CSV: {e}")
 
-    def export_json(self):
-        tasks = list_tasks()
-        file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
+    def _export_json(self):
+        tasks = self.controller.list_tasks()
+        file_path = filedialog.asksaveasfilename(defaultextension=".json",
+                                                 filetypes=[("JSON files", "*.json")])
         if file_path:
-            import json
-            tasks_data = [task.to_dict() for task in tasks]
-            with open(file_path, "w", encoding="utf-8") as jsonfile:
-                json.dump(tasks_data, jsonfile, ensure_ascii=False, indent=4)
-            print("JSON export completed.")
+            try:
+                data = [t.__dict__ for t in tasks]
+                # ou plus propre: [t.to_dict() for t in tasks]
+                with open(file_path, "w", encoding="utf-8") as jf:
+                    json.dump(data, jf, ensure_ascii=False, indent=4)
+                print("JSON export successful.")
+            except Exception as e:
+                print(f"Error exporting JSON: {e}")
