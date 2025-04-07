@@ -112,7 +112,7 @@ class EditTaskDialog(ctk.CTkToplevel):
         self.inline_add_subtask_button.grid(row=0, column=2, sticky="e", padx=5)
 
         # Scrollable container for subtasks
-        self.subtasks_container = ctk.CTkScrollableFrame(self.content_frame, width=300, height=150)
+        self.subtasks_container = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         self.subtasks_container.pack(pady=5, fill="both", expand=False)
         self.update_subtasks_list()
 

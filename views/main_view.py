@@ -36,7 +36,11 @@ class MainView(ctk.CTkFrame):
                 widget.destroy()
             self.tasks = list_tasks()
             if not self.tasks:
-                self.open_example_task_entry()
+                # Display an example label that is clickable
+                example_label = ctk.CTkLabel(self.tasks_frame, text="Click here to add a task",
+                                            text_color="gray", anchor="center")
+                example_label.pack(pady=10, fill="x")
+                example_label.bind("<Button-1>", lambda e: self.edit_example_task(example_label))
             else:
                 self.tasks.sort(key=lambda t: (t.done, -t.key if t.done else t.key))
                 for task in self.tasks:
@@ -44,23 +48,33 @@ class MainView(ctk.CTkFrame):
         except Exception as ex:
             print("Error in refresh_tasks:", ex)
 
-    def open_example_task_entry(self):
+    def edit_example_task(self, example_label):
         """
-        Crée une ligne d'entrée pour ajouter une tâche quand la liste est vide.
-        Cette ligne est insérée dans son propre conteneur, de sorte qu'elle ne perturbe pas le reste.
+        Replace the example label with an inline Entry for adding a new task.
+        This behaves similarly to the subtask example in the edit dialog.
         """
-        entry_frame = ctk.CTkFrame(self.tasks_frame, fg_color="#555555", corner_radius=8, height=40)
-        entry_frame.pack(pady=10, padx=5, fill="x")
-        entry_frame.pack_propagate(False)
-        entry = ctk.CTkEntry(entry_frame, placeholder_text="New task title")
-        entry.pack(side="left", padx=5, fill="x", expand=True)
+        container = example_label.master
+        example_label.destroy()
+        entry = ctk.CTkEntry(container, placeholder_text="New task title")
+        entry.pack(pady=10, fill="x", padx=5)
         entry.focus()
-        done_var = ctk.BooleanVar(value=False)
-        checkbox = ctk.CTkCheckBox(entry_frame, variable=done_var, text="", width=25)
-        checkbox.pack(side="left", padx=5)
+        # When the user presses Return or loses focus, save the new task inline.
+        entry.bind("<Return>", lambda e: self.save_new_task_inline(entry, container))
+        entry.bind("<FocusOut>", lambda e: self.save_new_task_inline(entry, container))
 
-        entry.bind("<Return>", lambda e: self.save_new_task(entry.get(), done_var.get(), entry_frame))
-        entry.bind("<FocusOut>", lambda e: self.save_new_task(entry.get(), done_var.get(), entry_frame))
+    def save_new_task_inline(self, entry, container):
+        """
+        Save a new task from the inline Entry.
+        The Entry is removed and the view is refreshed.
+        """
+        title = entry.get().strip()
+        entry.destroy()
+        if title:
+            new_task = Task(title=title, done=False)
+            new_id = add_task(new_task)
+            if new_id:
+                new_task.key = new_id
+        self.refresh_tasks()
 
     def add_task_widget(self, task):
         """Create a row for a task with inline editable title."""
@@ -184,8 +198,6 @@ class MainView(ctk.CTkFrame):
         entry.focus()
 
         done_var = ctk.BooleanVar(value=False)
-        checkbox = ctk.CTkCheckBox(entry_frame, variable=done_var, text="", width=25)
-        checkbox.pack(side="left", padx=5)
 
         def save_entry(event=None):
             if not self.task_entry_active:
