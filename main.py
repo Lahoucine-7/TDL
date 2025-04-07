@@ -1,66 +1,67 @@
 import customtkinter as ctk
+from models.database import init_db
 from views.main_view import MainView
 from views.calendar_view import CalendarView
 from views.settings_view import SettingsView
 
-class TodoApp(ctk.CTk):
+# Initialize the database (create tables if they don't exist)
+init_db()
 
-    themes_mode = ["dark", "light"]
+class TodoApp(ctk.CTk):
+    """Main application window with sidebar navigation and multiple views."""
+    THEMES = ["dark", "light"]
 
     def __init__(self):
         super().__init__()
-
         self.title("Advanced To-Do List")
-        self.geometry("1000x600")
+        self.geometry("1080x720")
 
-        
-        self.current_mode = self.themes_mode[0]
-
-        # Configuration thèmes (clair/sombre)
-        ctk.set_appearance_mode(self.current_mode)  # dark / light
+        # Set initial theme
+        self.current_theme = self.THEMES[0]
+        ctk.set_appearance_mode(self.current_theme)
         ctk.set_default_color_theme("blue")
 
-        # Créer une barre latérale
+        # Create sidebar
         self.sidebar_frame = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.pack(side="left", fill="y")
 
-        # Créer la zone principale pour les vues et la configurer avec grid
+        # Create main container with grid configuration
         self.main_frame = ctk.CTkFrame(self, corner_radius=0)
         self.main_frame.pack(side="right", expand=True, fill="both")
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
-        # Créer les vues sans les packer, mais en les plaçant via grid
+        # Initialize views (do not call pack in the view files)
         self.main_view = MainView(self.main_frame)
         self.calendar_view = CalendarView(self.main_frame)
         self.settings_view = SettingsView(self.main_frame, self.toggle_theme)
 
-        # Placer toutes les vues dans la même cellule
+        # Place views in the same grid cell and show the main view by default
         self.main_view.grid(row=0, column=0, sticky="nsew")
         self.calendar_view.grid(row=0, column=0, sticky="nsew")
         self.settings_view.grid(row=0, column=0, sticky="nsew")
-
-        # Afficher la vue principale par défaut
         self.show_view(self.main_view)
 
-        # Ajouter boutons dans la barre latérale
+        # Create sidebar navigation buttons
         self.add_sidebar_buttons()
 
     def add_sidebar_buttons(self):
-        btn_todo = ctk.CTkButton(self.sidebar_frame, text="Mes Tâches", command=lambda: self.show_view(self.main_view))
-        btn_calendar = ctk.CTkButton(self.sidebar_frame, text="Calendrier", command=lambda: self.show_view(self.calendar_view))
-        btn_settings = ctk.CTkButton(self.sidebar_frame, text="Paramètres", command=lambda: self.show_view(self.settings_view))
-
-        btn_todo.pack(pady=10, padx=10)
+        """Create buttons in the sidebar to navigate between views."""
+        btn_tasks = ctk.CTkButton(self.sidebar_frame, text="Tasks", command=lambda: self.show_view(self.main_view))
+        btn_calendar = ctk.CTkButton(self.sidebar_frame, text="Calendar", command=lambda: self.show_view(self.calendar_view))
+        btn_settings = ctk.CTkButton(self.sidebar_frame, text="Settings", command=lambda: self.show_view(self.settings_view))
+        btn_tasks.pack(pady=10, padx=10)
         btn_calendar.pack(pady=10, padx=10)
         btn_settings.pack(pady=10, padx=10)
 
     def show_view(self, view):
+        """Bring the specified view to the front."""
         view.tkraise()
 
     def toggle_theme(self):
-        self.current_mode = self.themes_mode[1] if self.current_mode == self.themes_mode[0] else self.themes_mode[0]
-        ctk.set_appearance_mode(self.current_mode)
+        """Toggle the current theme and update the appearance mode."""
+        self.current_theme = self.THEMES[1] if self.current_theme == self.THEMES[0] else self.THEMES[0]
+        ctk.set_appearance_mode(self.current_theme)
 
 if __name__ == "__main__":
     app = TodoApp()

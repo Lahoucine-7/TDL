@@ -5,6 +5,13 @@ from models.subtask import Subtask
 from models.database import connect_db, close_db
 
 def execute_query(query, params=(), fetch=False):
+    """
+    Executes an SQL query with the provided parameters.
+    :param query: SQL query string.
+    :param params: Tuple of parameters.
+    :param fetch: Boolean indicating if fetchall() should be called.
+    :return: Tuple (results, lastrowid).
+    """
     try:
         db = connect_db()
         cursor = db.cursor()
@@ -15,71 +22,74 @@ def execute_query(query, params=(), fetch=False):
         close_db(db)
         return result, lastrowid
     except Exception as e:
-        print(f"Erreur lors de l'exécution de la requête: {e}")
+        print(f"Error executing query: {e}")
         close_db(db)
         return None, None
 
-# --- Fonctions pour les tâches ---
+# --- Task functions ---
 
-def ajouter_tache(task):
+def add_task(task):
     query = """
-        INSERT INTO tasks (titre, description, date, heure, duree, done)
+        INSERT INTO tasks (title, description, date, time, duration, done)
         VALUES (?, ?, ?, ?, ?, ?)
     """
-    _, lastrowid = execute_query(query, (task.titre, task.description, task.date, task.done, task.heure, task.duree))
+    # Store 'done' as integer (0 or 1)
+    _, lastrowid = execute_query(query, (task.title, task.description, task.date, task.time, task.duration, int(task.done)))
     return lastrowid
 
-def modifier_tache(task):
+def update_task(task):
     query = """
         UPDATE tasks 
-        SET titre = ?, description = ?, date = ?, heure = ?, duree = ?, done = ?
+        SET title = ?, description = ?, date = ?, time = ?, duration = ?, done = ?
         WHERE key = ?
     """
-    execute_query(query, (task.titre, task.description, task.date, task.heure, task.duree, task.done, task.key))
+    execute_query(query, (task.title, task.description, task.date, task.time, task.duration, int(task.done), task.key))
 
-def supprimer_tache(task_key):
-    # Supprimer d'abord les sous-tâches associées
+def delete_task(task_key):
+    # Delete associated subtasks first
     execute_query("DELETE FROM subtasks WHERE task_key = ?", (task_key,))
     execute_query("DELETE FROM tasks WHERE key = ?", (task_key,))
 
-def lister_taches():
-    query = "SELECT key, titre, description, date, heure, duree FROM tasks"
+def list_tasks():
+    query = "SELECT key, title, description, date, time, duration, done FROM tasks"
     rows, _ = execute_query(query, fetch=True)
     tasks = []
-    for row in rows:
-        key, titre, description, date, heure, duree = row
-        task = Task(titre=titre, description=description, date=date, heure=heure, duree=duree, key=key)
-        task.subtasks = lister_subtasks(key)
-        tasks.append(task)
+    if rows:
+        for row in rows:
+            key, title, description, date, time_field, duration, done = row
+            task = Task(title=title, description=description, date=date, time=time_field, duration=duration, key=key, done=bool(done))
+            task.subtasks = list_subtasks(key)
+            tasks.append(task)
     return tasks
 
-# --- Fonctions pour les sous-tâches ---
+# --- Subtask functions ---
 
-def ajouter_subtask(subtask):
+def add_subtask(subtask):
     query = """
-        INSERT INTO subtasks (task_key, titre, description)
-        VALUES (?, ?, ?)
+        INSERT INTO subtasks (task_key, title, description, done)
+        VALUES (?, ?, ?, ?)
     """
-    _, lastrowid = execute_query(query, (subtask.task_key, subtask.titre, subtask.description))
+    _, lastrowid = execute_query(query, (subtask.task_key, subtask.title, subtask.description, int(subtask.done)))
     return lastrowid
 
-def modifier_subtask(subtask):
+def update_subtask(subtask):
     query = """
         UPDATE subtasks
-        SET titre = ?, description = ?
+        SET title = ?, description = ?, done = ?
         WHERE key = ?
     """
-    execute_query(query, (subtask.titre, subtask.description, subtask.key))
+    execute_query(query, (subtask.title, subtask.description, int(subtask.done), subtask.key))
 
-def supprimer_subtask(subtask_key):
+def delete_subtask(subtask_key):
     query = "DELETE FROM subtasks WHERE key = ?"
     execute_query(query, (subtask_key,))
 
-def lister_subtasks(task_key):
-    query = "SELECT key, task_key, titre, description FROM subtasks WHERE task_key = ?"
+def list_subtasks(task_key):
+    query = "SELECT key, task_key, title, description, done FROM subtasks WHERE task_key = ?"
     rows, _ = execute_query(query, (task_key,), fetch=True)
     subtasks = []
-    for row in rows:
-        key, task_key, titre, description = row
-        subtasks.append(Subtask(task_key=task_key, titre=titre, description=description, key=key))
+    if rows:
+        for row in rows:
+            key, task_key, title, description, done = row
+            subtasks.append(Subtask(task_key=task_key, title=title, description=description, key=key, done=bool(done)))
     return subtasks
