@@ -63,6 +63,11 @@ class TodoApp(ctk.CTk):
         self.current_theme = self.THEMES[1] if self.current_theme == self.THEMES[0] else self.THEMES[0]
         ctk.set_appearance_mode(self.current_theme)
 
+        try:
+            self.main_frame.focus_set()
+        except Exception as e:
+            print("Error setting focus:", e)
+
 if __name__ == "__main__":
     app = TodoApp()
     app.mainloop()
