@@ -3,6 +3,7 @@ from controllers.task_controller import list_tasks, update_task, delete_task, ad
 from models.task import Task
 from views.edit_task_dialog import EditTaskDialog
 from customtkinter import CTkFont
+import theme
 
 
 class MainView(ctk.CTkFrame):
@@ -14,10 +15,10 @@ class MainView(ctk.CTkFrame):
 
     def create_widgets(self):
 
-        self.normal_font = CTkFont(family="Helvetica", size=12)
-        self.overstrike_font = CTkFont(family="Helvetica", size=12, overstrike=1)
+        self.normal_font = theme.get_font()
+        self.overstrike_font = theme.get_font(overstrike=True)
 
-        self.title_label = ctk.CTkLabel(self, text="My Tasks", font=("Helvetica", 20))
+        self.title_label = ctk.CTkLabel(self, text="My Tasks", font=self.normal_font)
         self.title_label.pack(pady=10)
 
         self.tasks_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -148,7 +149,7 @@ class MainView(ctk.CTkFrame):
             new_label_text = f"{task.title}{details_str}"
             if task.done:
                 new_label_text = f"~~{new_label_text}~~"
-            new_label = ctk.CTkLabel(label_widget.master, text=new_label_text, anchor="w", font=( "Helvetica", 12, "overstrike") if task.done else ("Helvetica", 12))
+            new_label = ctk.CTkLabel(label_widget.master, text=new_label_text, anchor="w", font=self.normal_font if task.done else self.overstrike_font)
             new_label.pack(side="left", padx=5, fill="x", expand=True)
             new_label.bind("<Button-1>", lambda e, t=task, lbl=new_label: self.edit_task_inline(t, lbl))
 

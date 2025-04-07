@@ -3,6 +3,7 @@ from tkcalendar import DateEntry
 from controllers.task_controller import update_task, add_subtask, list_subtasks, delete_subtask, update_subtask
 from models.subtask import Subtask
 from customtkinter import CTkFont
+import theme
 
 class EditTaskDialog(ctk.CTkToplevel):
     """
@@ -32,8 +33,8 @@ class EditTaskDialog(ctk.CTkToplevel):
         self.footer_frame.pack(fill="x", padx=10, pady=10)
 
         # Define fonts for subtasks
-        self.normal_font = CTkFont(family="Helvetica", size=12)
-        self.overstrike_font = CTkFont(family="Helvetica", size=12, overstrike=1)
+        self.normal_font = theme.get_font()
+        self.overstrike_font = theme.get_font(overstrike=True)
 
         self.create_widgets()
 
@@ -105,7 +106,7 @@ class EditTaskDialog(ctk.CTkToplevel):
         subtasks_header.grid_columnconfigure(0, weight=1)
         subtasks_header.grid_columnconfigure(1, weight=2)
         subtasks_header.grid_columnconfigure(2, weight=1)
-        self.subtasks_label = ctk.CTkLabel(subtasks_header, text="Subtasks", font=("Helvetica", 16))
+        self.subtasks_label = ctk.CTkLabel(subtasks_header, text="Subtasks", font=self.normal_font)
         self.subtasks_label.grid(row=0, column=1, sticky="nsew")
         self.inline_add_subtask_button = ctk.CTkButton(subtasks_header, text="+", width=30, fg_color="blue",
                                                        command=self.open_add_subtask_entry)
