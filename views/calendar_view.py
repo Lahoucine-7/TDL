@@ -14,15 +14,12 @@ class CalendarView(ctk.CTkFrame):
         self._create_widgets()
 
     def _create_widgets(self):
-        self.title_label = ctk.CTkLabel(self, text="Calendar View", font=("Helvetica", 20))
+        self.title_label = ctk.CTkLabel(self, text="Calendar View", font=("Roboto", 20))
         self.title_label.pack(pady=10)
-
         self.calendar = Calendar(self, selectmode="day", date_pattern="yyyy-mm-dd")
         self.calendar.pack(pady=10)
-
         self.show_tasks_button = ctk.CTkButton(self, text="Show Tasks", command=self._show_tasks)
         self.show_tasks_button.pack(pady=10)
-
         self.tasks_textbox = ctk.CTkTextbox(self, width=600, height=300)
         self.tasks_textbox.pack(pady=10)
 
