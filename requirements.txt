@@ -1,4 +1,3 @@
 customtkinter
 tkcalendar
-plyer
-pandas
+Pillow
