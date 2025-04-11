@@ -1,0 +1,17 @@
+# Ignorer les fichiers/dossiers de cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environnements virtuels
+venv/
+.env/
+
+# Fichiers de configuration
+*.sqlite3
+*.db
+
+# VSCode
+.vscode/
+
